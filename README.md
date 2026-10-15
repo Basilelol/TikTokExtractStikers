@@ -224,5 +224,5 @@ Check that:
 3. Run the Python script to extract available images.
 4. Transfer the images to your smartphone.
 5. Create a sticker pack compatible with WhatsApp.
-
+---
 **Enjoy your stickers! 🎉**
