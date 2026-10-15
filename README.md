@@ -1,90 +1,90 @@
 # TikTok to WhatsApp Sticker Exporter 🚀
 
-Uno strumento semplice e una guida passo-passo per estrarre gli sticker preferiti salvati o inviati su TikTok e importarli su WhatsApp, utilizzando un file di log di rete (`.har`) del browser e uno script Python con interfaccia grafica integrata.
+A simple tool and step-by-step guide to extracting your favorite stickers from TikTok and importing them into WhatsApp using a browser network log (`.har` file) and a Python script with a built-in graphical interface.
 
-Poiché TikTok carica messaggi, immagini e contenuti delle chat in modo incrementale (*lazy loading*), questa guida spiega come caricare la cronologia desiderata prima di esportare i dati.
+Since TikTok loads messages, images, and chat content incrementally through *lazy loading*, this guide explains how to load the relevant chat history before attempting to export the available images.
 
-## 📑 Indice
+## 📑 Table of Contents
 
-- [Prerequisiti](#-1-prerequisiti)
-- [Passo 1: Caricare gli sticker su TikTok Web](#-2-passo-1-caricare-gli-sticker-su-tiktok-web)
-- [Passo 2: Esportare il file HAR](#-3-passo-2-esportare-il-file-har)
-- [Passo 3: Estrarre le immagini con Python](#-4-passo-3-estrarre-le-immagini-con-python)
-- [Passo 4: Trasferire gli sticker su smartphone e importarli in WhatsApp](#-5-passo-4-trasferire-gli-sticker-su-smartphone-e-importarli-in-whatsapp)
-- [Risoluzione dei problemi](#-6-risoluzione-dei-problemi)
-- [Privacy e sicurezza](#-7-privacy-e-sicurezza)
-- [Licenza](#-8-licenza)
-
----
-
-## 🛠️ 1. Prerequisiti
-
-Prima di iniziare, assicurati di avere a disposizione:
-
-- Un computer con **Python 3.x** installato.
-- Un browser desktop, ad esempio Google Chrome, Microsoft Edge o Brave.
-- Un account TikTok con accesso ai messaggi e agli sticker che desideri recuperare.
-- Uno smartphone con WhatsApp installato.
-- Facoltativamente, un servizio cloud come Google Drive o OneDrive per trasferire le immagini.
-
-Lo script utilizza esclusivamente moduli della libreria standard di Python, tra cui `json`, `base64`, `os`, `urllib` e `tkinter`. Non è necessario installare librerie esterne.
-
-> **Nota:** il recupero dipende dai dati effettivamente disponibili nel browser e dalle modalità con cui TikTok carica e distribuisce gli sticker. Non è garantito che ogni sticker venga recuperato dal file HAR.
+- [Prerequisites](#-1-prerequisites)
+- [Step 1: Load Stickers on TikTok Web](#-2-step-1-load-stickers-on-tiktok-web)
+- [Step 2: Export the HAR File](#-3-step-2-export-the-har-file)
+- [Step 3: Extract Images Using Python](#-4-step-3-extract-images-using-python)
+- [Step 4: Transfer Stickers to Your Smartphone and Import Them into WhatsApp](#-5-step-4-transfer-stickers-to-your-smartphone-and-import-them-into-whatsapp)
+- [Troubleshooting](#-6-troubleshooting)
+- [Privacy and Security](#-7-privacy-and-security)
+- [License](#-8-license)
 
 ---
 
-## 🌐 2. Passo 1: Caricare gli sticker su TikTok Web
+## 🛠️ 1. Prerequisites
 
-TikTok non carica necessariamente tutta la cronologia di una chat in una sola volta. Per ridurre il consumo di risorse, può caricare i messaggi man mano che vengono visualizzati.
+Before getting started, make sure you have:
 
-Per aumentare le possibilità di recuperare gli sticker desiderati:
+- A computer with **Python 3.x** installed.
+- A desktop browser, such as Google Chrome, Microsoft Edge, or Brave.
+- A TikTok account with access to the messages and stickers you want to retrieve.
+- A smartphone with WhatsApp installed.
+- Optionally, a cloud storage service such as Google Drive or OneDrive to transfer the images.
 
-1. Apri [TikTok Web](https://www.tiktok.com/) dal browser del computer.
-2. Accedi al tuo account.
-3. Entra nella sezione **Messaggi**.
-4. Apri la conversazione che contiene gli sticker da recuperare.
-5. Scorri lentamente verso l'alto nella cronologia della chat, fino a raggiungere il periodo che ti interessa.
-6. Attendi il caricamento dei messaggi prima di continuare a scorrere.
-7. Ripeti l'operazione fino a raggiungere l'inizio del periodo desiderato.
+The script uses only Python's standard library, including `json`, `base64`, `os`, `urllib`, and `tkinter`. No third-party Python packages are required.
 
-### 💡 Il trucco del caricamento incrementale
-
-Non basta aprire la chat: è necessario permettere al browser di caricare i messaggi e le risorse associate.
-
-Scorrere gradualmente la cronologia può indurre TikTok a richiedere ulteriori dati al server. Tuttavia, non garantisce che tutte le immagini siano memorizzate nel browser o incluse nel successivo file HAR.
-
-**Consiglio:** se devi recuperare sticker di un periodo specifico, concentrati su quel periodo invece di caricare inutilmente tutta la cronologia.
+> **Note:** Successful extraction depends on which data is available in the browser and how TikTok loads and delivers sticker images. There is no guarantee that every sticker will be recovered from the HAR file.
 
 ---
 
-## 📡 3. Passo 2: Esportare il file HAR
+## 🌐 2. Step 1: Load Stickers on TikTok Web
 
-Il file `.har` (*HTTP Archive*) registra le richieste di rete effettuate dal browser e, quando disponibili, alcuni dati delle risposte. Può contenere URL, intestazioni, metadati e corpi delle risposte.
+TikTok does not necessarily load an entire chat history at once. To reduce resource usage, it may load messages as they become visible.
 
-Segui questi passaggi:
+To improve your chances of retrieving the stickers you want:
 
-1. Mantieni aperta la chat di TikTok.
-2. Premi `F12` oppure fai clic con il tasto destro sulla pagina e seleziona **Ispeziona**.
-3. Apri la scheda **Network** (Rete).
-4. Verifica che la registrazione delle richieste sia attiva.
-5. Se disponibile, abilita **Preserve log** per conservare le richieste durante eventuali navigazioni o aggiornamenti della pagina.
-6. Esegui un piccolo movimento di scroll nella chat oppure apri uno sticker, così da generare nuove richieste.
-7. Nel pannello Network, cerca l'opzione per esportare o salvare le richieste in formato HAR. In Chrome e nei browser basati su Chromium, può essere disponibile tramite il menu contestuale del pannello.
-8. Salva il file sul computer, ad esempio con il nome `tiktok.har`.
+1. Open [TikTok Web](https://www.tiktok.com/) in your desktop browser.
+2. Sign in to your account.
+3. Open the **Messages** section.
+4. Select the conversation containing the stickers you want to retrieve.
+5. Slowly scroll upward through the chat history until you reach the period you are interested in.
+6. Wait for older messages to load before continuing to scroll.
+7. Repeat until you reach the beginning of the relevant period.
 
-Il file esportato potrebbe includere anche richieste estranee agli sticker, come avatar, miniature e altre risorse della pagina.
+### 💡 The Lazy-Loading Trick
 
-> **Importante:** il formato HAR può contenere informazioni sensibili della sessione, URL privati e dati delle conversazioni. Non pubblicarlo su GitHub e non condividerlo senza aver verificato e rimosso le informazioni riservate.
+Simply opening a chat is not enough. You need to give the browser an opportunity to load the messages and their associated resources.
+
+Gradually scrolling through the conversation may cause TikTok to request additional data from its servers. However, this does not guarantee that every image will be stored in the browser or included in the HAR file.
+
+**Tip:** If you only need stickers from a particular period, focus on loading that period instead of unnecessarily loading the entire conversation.
 
 ---
 
-## 🐍 4. Passo 3: Estrarre le immagini con Python
+## 📡 3. Step 2: Export the HAR File
 
-In questa fase utilizzeremo uno script Python con una finestra di dialogo per selezionare il file HAR.
+A `.har` (*HTTP Archive*) file records network requests made by the browser and, when available, some of the corresponding response data. It may contain URLs, headers, metadata, and response bodies.
 
-### 4.1 Creare il file Python
+Follow these steps:
 
-Crea un file chiamato `extract_stickers.py` e incolla il codice seguente.
+1. Keep the TikTok chat open.
+2. Press `F12`, or right-click the page and select **Inspect**.
+3. Open the **Network** tab.
+4. Make sure network recording is enabled.
+5. If available, enable **Preserve log** to retain requests during navigation or page reloads.
+6. Scroll slightly through the chat or open a sticker to generate additional network requests.
+7. In the Network panel, look for the option to export or save requests as a HAR file. In Chrome and Chromium-based browsers, this may be available through the panel's context menu.
+8. Save the file to your computer, for example as `tiktok.har`.
+
+The exported file may contain unrelated requests, such as profile pictures, thumbnails, and other page resources.
+
+> **Important:** HAR files can contain sensitive session information, private URLs, request headers, and conversation data. Do not publish them on GitHub or share them without checking for and removing sensitive information.
+
+---
+
+## 🐍 4. Step 3: Extract Images Using Python
+
+In this step, we will use a Python script with a file-selection dialog to choose the HAR file.
+
+### 4.1 Create the Python File
+
+Create a file named `extract_stickers.py` and paste the following code into it.
 
 ```python
 import json
@@ -102,7 +102,7 @@ OUTPUT_FOLDER = "extracted_stickers"
 
 
 def get_image_extension(mime_type, url):
-    """Determina l'estensione dell'immagine dal MIME type o dall'URL."""
+    """Determine the image extension from its MIME type or URL."""
     mime_type = mime_type.lower().split(";")[0].strip()
     path = urlparse(url).path.lower()
 
@@ -135,7 +135,7 @@ def extract_images_from_har(
     har_file_path,
     output_folder=OUTPUT_FOLDER,
 ):
-    """Estrae le immagini disponibili nelle risposte del file HAR."""
+    """Extract available images from HAR response data."""
     os.makedirs(output_folder, exist_ok=True)
 
     try:
@@ -144,8 +144,8 @@ def extract_images_from_har(
 
     except (OSError, json.JSONDecodeError) as error:
         messagebox.showerror(
-            "Errore",
-            f"Impossibile leggere il file HAR:\n{error}",
+            "Error",
+            f"Unable to read the HAR file:\n{error}",
         )
         return 0
 
@@ -180,13 +180,13 @@ def extract_images_from_har(
         if not is_image:
             continue
 
-        # Evita di salvare più volte la stessa URL.
+        # Avoid downloading the same URL more than once.
         if req_url in seen_urls:
             continue
 
         seen_urls.add(req_url)
 
-        # Ignora le risposte HTTP non riuscite.
+        # Ignore unsuccessful HTTP responses.
         if response.get("status", 0) >= 400:
             continue
 
@@ -199,7 +199,7 @@ def extract_images_from_har(
 
         saved = False
 
-        # Primo tentativo: recupera il corpo della risposta dal HAR.
+        # First attempt: extract the response body from the HAR file.
         if text_data:
             try:
                 if encoding == "base64":
@@ -228,8 +228,8 @@ def extract_images_from_har(
             except (ValueError, OSError):
                 saved = False
 
-        # Secondo tentativo: richiede nuovamente l'URL pubblico.
-        # Potrebbe non funzionare con URL scaduti o autenticati.
+        # Second attempt: request the public HTTPS URL again.
+        # This may fail for expired or authenticated URLs.
         if not saved and req_url.startswith("https://"):
             try:
                 request_obj = urllib.request.Request(
@@ -248,8 +248,8 @@ def extract_images_from_har(
                 ) as response_stream:
                     image_data = response_stream.read()
 
-                # Controlla che la risposta sia effettivamente
-                # un'immagine prima di salvarla.
+                # Check that the response resembles an image
+                # before saving it.
                 if image_data.startswith(
                     (
                         b"\x89PNG\r\n\x1a\n",
@@ -266,15 +266,15 @@ def extract_images_from_har(
                     saved = True
 
             except Exception:
-                # Alcune risorse richiedono autenticazione
-                # o non sono più disponibili.
+                # Some resources require authentication
+                # or are no longer available.
                 pass
 
         if saved:
             extracted_count += 1
 
         else:
-            # Non lasciare file vuoti o incompleti.
+            # Remove empty or incomplete files.
             try:
                 if os.path.exists(filepath):
                     os.remove(filepath)
@@ -289,15 +289,15 @@ def main():
     root.withdraw()
 
     messagebox.showinfo(
-        "Seleziona HAR",
-        "Seleziona il file .har esportato dal browser.",
+        "Select HAR File",
+        "Select the .har file exported from your browser.",
     )
 
     har_path = filedialog.askopenfilename(
-        title="Seleziona il file HAR di TikTok",
+        title="Select TikTok HAR File",
         filetypes=[
-            ("File HAR", "*.har"),
-            ("Tutti i file", "*.*"),
+            ("HAR Files", "*.har"),
+            ("All Files", "*.*"),
         ],
     )
 
@@ -309,17 +309,16 @@ def main():
 
     if count > 0:
         messagebox.showinfo(
-            "Estrazione completata",
-            f"Immagini estratte: {count}\n\n"
-            f"Cartella: {os.path.abspath(OUTPUT_FOLDER)}",
+            "Extraction Complete",
+            f"Images extracted: {count}\n\n"
+            f"Folder: {os.path.abspath(OUTPUT_FOLDER)}",
         )
 
     else:
         messagebox.showwarning(
-            "Nessuna immagine trovata",
-            "Non è stato possibile estrarre immagini dal file HAR.\n\n"
-            "Verifica che il file contenga le risposte delle "
-            "immagini e riprova.",
+            "No Images Found",
+            "No images could be extracted from the selected HAR file.\n\n"
+            "Check whether the file contains image responses and try again.",
         )
 
     root.destroy()
@@ -329,36 +328,36 @@ if __name__ == "__main__":
     main()
 ```
 
-### 4.2 Eseguire lo script
+### 4.2 Run the Script
 
-Apri il terminale nella cartella contenente `extract_stickers.py`.
+Open a terminal in the folder containing `extract_stickers.py`.
 
-Esegui:
+Run:
 
 ```bash
 python extract_stickers.py
 ```
 
-Su alcuni sistemi potrebbe essere necessario utilizzare:
+On some systems, you may need to use:
 
 ```bash
 python3 extract_stickers.py
 ```
 
-Su Windows, se il comando `python` non è disponibile, puoi provare:
+On Windows, if the `python` command is unavailable, try:
 
 ```powershell
 py extract_stickers.py
 ```
 
-Si aprirà una finestra di dialogo:
+A file-selection dialog will open:
 
-1. Seleziona il file `.har`.
-2. Attendi il completamento dell'estrazione.
-3. Leggi il messaggio che indica il numero di immagini recuperate.
-4. Apri la cartella `extracted_stickers`, creata nella cartella di lavoro dello script.
+1. Select your `.har` file.
+2. Wait for the extraction to finish.
+3. Read the message showing how many images were recovered.
+4. Open the `extracted_stickers` folder, created in the script's working directory.
 
-Le immagini estratte saranno organizzate con nomi progressivi, ad esempio:
+The extracted images will be saved with sequential filenames, for example:
 
 ```text
 extracted_stickers/
@@ -368,143 +367,143 @@ extracted_stickers/
 └── sticker_004.webp
 ```
 
-**Attenzione:** il codice è un estrattore generico di immagini, non un parser specifico degli sticker TikTok. Può recuperare anche avatar, miniature e immagini non pertinenti. Inoltre, alcune risposte HAR non includono i dati binari delle immagini: in quei casi, lo script potrebbe non riuscire a recuperarle.
+**Important:** This is a general-purpose image extractor, not a TikTok-specific sticker parser. It may also recover profile pictures, thumbnails, and unrelated images. Some HAR responses do not include the binary image data, so the script may be unable to recover those images.
 
 ---
 
-## 📱 5. Passo 4: Trasferire gli sticker su smartphone e importarli in WhatsApp
+## 📱 5. Step 4: Transfer Stickers to Your Smartphone and Import Them into WhatsApp
 
-Dopo aver estratto le immagini sul computer, puoi trasferirle sul telefono e convertirle in un pacchetto di sticker.
+Once the images have been extracted on your computer, you can transfer them to your phone and turn them into a sticker pack.
 
-### 5.1 Trasferire le immagini
+### 5.1 Transfer the Images
 
-Scegli uno dei seguenti metodi:
+Choose one of the following methods:
 
-- **Google Drive:** carica la cartella o i file e scaricali sullo smartphone.
-- **OneDrive:** sincronizza la cartella e scarica le immagini sul telefono.
-- **Cavo USB:** copia le immagini direttamente nella memoria del dispositivo.
-- **Chat personale:** inviati le immagini tramite un servizio di messaggistica che consenta di conservarle come file.
+- **Google Drive:** Upload the folder or files and download them to your smartphone.
+- **OneDrive:** Sync the folder and download the images to your phone.
+- **USB cable:** Copy the images directly to your device's storage.
+- **Personal chat:** Send the images to yourself through a messaging service that allows you to keep them as files.
 
-Se trasferisci molte immagini, può essere utile comprimere la cartella in un archivio ZIP.
+If you are transferring many images, you may find it convenient to compress the folder into a ZIP archive.
 
-### 5.2 Importare gli sticker su WhatsApp
+### 5.2 Import Stickers into WhatsApp
 
-Per creare un pacchetto personalizzato:
+To create a custom sticker pack:
 
-1. Installa un'applicazione per creare sticker compatibile con WhatsApp, ad esempio [Sticker Maker](https://play.google.com/store/search?q=sticker%20maker&c=apps) su Android, oppure cerca un'app equivalente nell'App Store su iPhone.
-2. Apri l'applicazione e crea un nuovo pacchetto.
-3. Importa le immagini estratte dalla cartella `extracted_stickers`.
-4. Se necessario, ritaglia le immagini e rimuovi lo sfondo.
-5. Aggiungi il numero minimo di sticker richiesto dall'applicazione.
-6. Usa la funzione di esportazione o aggiunta a WhatsApp, se disponibile.
-7. Apri WhatsApp e verifica che il pacchetto sia presente nella sezione degli sticker.
+1. Install a sticker-creation app compatible with WhatsApp, such as [Sticker Maker](https://play.google.com/store/search?q=sticker%20maker&c=apps) on Android, or find an equivalent app in the Apple App Store on iPhone.
+2. Open the app and create a new sticker pack.
+3. Import the extracted images from the `extracted_stickers` folder.
+4. Crop the images or remove their backgrounds if needed.
+5. Add the minimum number of stickers required by the app.
+6. Use the app's export or **Add to WhatsApp** feature, if available.
+7. Open WhatsApp and check that the sticker pack appears in the sticker section.
 
-Le procedure possono variare a seconda dell'applicazione, della versione di WhatsApp e del sistema operativo.
+The exact process may vary depending on the app, WhatsApp version, and operating system.
 
-### 5.3 Consigli per ottenere un risultato migliore
+### 5.3 Tips for Better Results
 
-- Controlla ogni immagine prima di importarla.
-- Elimina duplicati, avatar e miniature non pertinenti.
-- Preferisci immagini con sfondo trasparente quando disponibili.
-- Se un'immagine è troppo grande, ridimensionala con un editor compatibile.
-- Se lo sticker contiene animazioni, verifica che il file originale sia effettivamente animato: il semplice salvataggio di un'immagine statica non conserva l'animazione.
+- Review every image before importing it.
+- Remove duplicates, profile pictures, and irrelevant thumbnails.
+- Prefer images with transparent backgrounds when available.
+- Resize oversized images using a compatible image editor.
+- If you want animated stickers, check whether the original file actually contains animation. Saving a static image will not preserve animation.
 
 ---
 
-## 🔧 6. Risoluzione dei problemi
+## 🔧 6. Troubleshooting
 
-### Lo script non trova immagini
+### The Script Cannot Find Any Images
 
-Possibili cause:
+Possible causes:
 
-- Il file HAR contiene solo gli URL delle immagini, senza i corpi delle risposte.
-- Le immagini sono state caricate prima dell'inizio della registrazione.
-- La cronologia della chat non è stata caricata completamente.
-- TikTok utilizza risorse che richiedono autenticazione o URL temporanei.
+- The HAR file contains image URLs but not the response bodies.
+- The images were loaded before network recording started.
+- The relevant chat history was not fully loaded.
+- TikTok uses resources that require authentication or temporary URLs.
 
-**Soluzione:** ripeti la registrazione con la chat aperta, carica il periodo desiderato e verifica che nel file HAR siano presenti richieste di tipo `image`.
+**Solution:** Repeat the recording with the chat open, load the relevant period, and check whether the HAR file contains requests with an `image` content type.
 
-### Alcune immagini non si aprono
+### Some Images Will Not Open
 
-Il tipo di file potrebbe essere stato identificato in modo errato oppure il contenuto potrebbe non essere un'immagine valida.
+The file extension may have been identified incorrectly, or the response may not contain a valid image.
 
-**Soluzione:** verifica il MIME type della risposta e prova ad aprire il file con un visualizzatore compatibile.
+**Solution:** Check the response MIME type and try opening the file with a compatible image viewer.
 
-### Le immagini estratte non sono sticker
+### The Extracted Images Are Not Stickers
 
-Il file HAR registra anche immagini di profilo, miniature, elementi dell'interfaccia e altre risorse.
+HAR files can include profile pictures, thumbnails, interface elements, and other resources.
 
-**Soluzione:** controlla le immagini e seleziona manualmente quelle desiderate. Per un filtraggio più preciso, servirebbe un parser specifico delle richieste e dei formati utilizzati da TikTok.
+**Solution:** Review the extracted files and manually select the images you want. More precise filtering would require a parser tailored to TikTok's specific requests and data formats.
 
-### Il comando Python non funziona
+### The Python Command Does Not Work
 
-Verifica che Python 3 sia installato:
+Check whether Python 3 is installed:
 
 ```bash
 python --version
 ```
 
-Oppure:
+Alternatively:
 
 ```bash
 python3 --version
 ```
 
-Su Windows puoi provare:
+On Windows, try:
 
 ```powershell
 py --version
 ```
 
-Se Python è installato ma `tkinter` non è disponibile, potrebbe essere necessario installare il componente relativo al tuo sistema operativo.
+If Python is installed but `tkinter` is unavailable, you may need to install the corresponding component for your operating system.
 
-### L'importazione in WhatsApp non funziona
+### Importing into WhatsApp Does Not Work
 
-Verifica che:
+Check that:
 
-- L'app per creare sticker supporti il tuo sistema operativo.
-- Le immagini siano in un formato supportato.
-- Il pacchetto rispetti i requisiti dell'app.
-- WhatsApp sia aggiornato e installato sul dispositivo.
-
----
-
-## 🔐 7. Privacy e sicurezza
-
-Il file HAR può contenere informazioni sensibili, tra cui URL privati, intestazioni HTTP, identificativi e dati di sessione.
-
-Per proteggere il tuo account:
-
-- Non caricare file HAR su repository pubblici.
-- Non condividere file HAR non verificati con altre persone.
-- Non pubblicare cookie, token o intestazioni di autenticazione.
-- Conserva i file localmente e cancellali quando non sono più necessari.
-- Evita di eseguire script ricevuti da fonti non attendibili senza averne verificato il codice.
-
-Utilizza questo strumento esclusivamente per contenuti a cui hai legittimamente accesso e rispetta i termini di servizio di TikTok, le condizioni di WhatsApp e i diritti dei rispettivi autori.
+- The sticker-making app supports your operating system.
+- The images use a supported format.
+- The sticker pack meets the app's requirements.
+- WhatsApp is up to date and installed on your device.
 
 ---
 
-## 📄 8. Licenza
+## 🔐 7. Privacy and Security
 
-Questo progetto può essere pubblicato su GitHub come strumento personale e didattico.
+HAR files may contain sensitive information, including private URLs, HTTP headers, identifiers, and session data.
 
-Se desideri permettere ad altre persone di riutilizzare, modificare e distribuire il codice, puoi aggiungere una licenza open source, ad esempio la **MIT License**. In tal caso, inserisci un file `LICENSE` con il testo ufficiale della licenza e specifica il titolare del copyright.
+To protect your account:
 
-Se non hai ancora scelto una licenza, evita di dichiarare che il progetto è distribuito sotto MIT o un'altra licenza specifica.
+- Do not upload HAR files to public repositories.
+- Do not share unreviewed HAR files with other people.
+- Never publish cookies, authentication tokens, or authorization headers.
+- Keep the files locally and delete them when they are no longer needed.
+- Avoid running scripts from untrusted sources without reviewing the code.
+
+Use this tool only for content you are legally entitled to access, and respect TikTok's terms of service, WhatsApp's terms, and the rights of the original content creators.
 
 ---
 
-## 🚀 Conclusione
+## 📄 8. License
 
-Con questa procedura puoi tentare di recuperare le immagini caricate durante l'utilizzo di TikTok Web, organizzarle sul computer e trasferire quelle desiderate su WhatsApp.
+This project can be published on GitHub as a personal or educational tool.
 
-Il flusso di lavoro è semplice:
+If you want others to reuse, modify, and distribute the code, you can add an open-source license such as the **MIT License**. Create a `LICENSE` file containing the official license text and specify the copyright holder.
 
-1. Carica la cronologia desiderata su TikTok Web.
-2. Esporta il file HAR dal browser.
-3. Esegui lo script Python per estrarre le immagini disponibili.
-4. Trasferisci le immagini sullo smartphone.
-5. Crea un pacchetto di sticker compatibile con WhatsApp.
+If you have not chosen a license yet, do not claim that the project is distributed under the MIT License or any other specific license.
 
-**Buon divertimento con i tuoi sticker! 🎉**
+---
+
+## 🚀 Conclusion
+
+This workflow lets you attempt to recover images loaded while using TikTok Web, organize them on your computer, and transfer the images you want to WhatsApp.
+
+The process is straightforward:
+
+1. Load the relevant chat history on TikTok Web.
+2. Export the browser's HAR file.
+3. Run the Python script to extract available images.
+4. Transfer the images to your smartphone.
+5. Create a sticker pack compatible with WhatsApp.
+
+**Enjoy your stickers! 🎉**
